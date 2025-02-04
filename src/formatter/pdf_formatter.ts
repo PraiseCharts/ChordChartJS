@@ -50,6 +50,8 @@ import { Performance } from 'perf_hooks';
 import { Blob } from 'buffer';
 import Configuration, { defaultConfiguration } from './configuration';
 import { getCapos } from '../helpers';
+import JsPDFRenderer from '../chord_diagram/js_pdf_renderer';
+import ChordDiagram from '../chord_diagram/chord_diagram';
 declare const performance: Performance;
 
 class PdfFormatter extends Formatter {
@@ -93,11 +95,12 @@ class PdfFormatter extends Formatter {
     this.configuration = configuration;
     this.pdfConfiguration = pdfConfiguration;
     this.doc = this.setupDoc(docConstructor);
-    this.margins = this.pdfConfiguration.layout.global.margins;
+
     this.y = this.margins.top + this.pdfConfiguration.layout.header.height;
     this.x = this.margins.left;
     this.currentColumn = 1;
-    this.formatParagraphs();
+    // this.formatParagraphs();
+    this.renderChordDiagram();
     this.recordFormattingTime();
 
     // Must render the footer and header after all formatting
@@ -108,6 +111,33 @@ class PdfFormatter extends Formatter {
       this.renderLayout(this.pdfConfiguration.layout.header, 'header');
       this.renderLayout(this.pdfConfiguration.layout.footer, 'footer');
     }
+  }
+
+  renderChordDiagram() {
+    const chordDiagram = new ChordDiagram({
+      barres: [
+        { from: 3, to: 6, fret: 1 },
+        { from: 1, to: 5, fret: 5 },
+      ],
+      chord: 'Bm7',
+      markers: [
+        { string: 2, fret: 1, finger: 3 },
+        { string: 3, fret: 2, finger: 4 },
+        { string: 4, fret: 3, finger: 2 },
+        { string: 5, fret: 4, finger: 1 },
+        { string: 6, fret: 5, finger: 5 },
+      ],
+      fretCount: 5,
+      stringCount: 6,
+      openStrings: [6],
+      unusedStrings: [1, 2, 3, 4, 5],
+    });
+
+    const renderer = new JsPDFRenderer(this.doc, { x: 50, y: 100, width: 140 });
+    console.log(`rendered height: ${renderer.renderedHeight}`);
+    chordDiagram.render(renderer);
+    this.doc.setDrawColor(0);
+    this.doc.rect(50, 100, 140, renderer.renderedHeight, 'S');
   }
 
   // Save the formatted document as a PDF file
