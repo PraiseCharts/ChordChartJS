@@ -4,6 +4,8 @@ import PdfFormatter from '../../src/formatter/pdf_formatter';
 import defaultConfiguration from '../../src/formatter/pdf_formatter/default_configuration';
 import StubbedPdfDoc from './stubbed_pdf_doc';
 import { configure } from '../../src/formatter/configuration';
+import Song from '../../src/chord_sheet/song';
+import { PDFConfiguration } from '../../src/formatter/pdf_formatter/types';
 
 describe('PdfFormatter', () => {
   it('correctly formats a basic song', () => {
@@ -83,5 +85,70 @@ describe('PdfFormatter', () => {
     expect(doc).toHaveText('G', 351, 539);
     expect(doc).toHaveText('C/E', 416, 539);
     expect(doc).toHaveText('Dm', 487, 539);
+  });
+
+  it('renders header content', () => {
+    const formatter = new PdfFormatter();
+
+    const song = new Song({
+      key: 'Ab',
+      tempo: '140',
+      time: '7/8',
+    });
+
+    const config: PDFConfiguration = {
+      ...defaultConfiguration,
+      layout: {
+        ...defaultConfiguration.layout,
+        header: {
+          height: 60,
+          content: [
+            {
+              type: 'text',
+              template: 'Key of %{key} - BPM %{tempo} - Time %{time}',
+              style: {
+                name: 'NimbusSansL-Reg', style: 'normal', size: 12, color: 100,
+              },
+              position: { x: 'left', y: 28 },
+            },
+          ],
+        },
+      },
+    };
+
+    formatter.format(song, configure({}), config, StubbedPdfDoc);
+    const doc = formatter.doc.doc as StubbedPdfDoc;
+
+    expect(doc).toHaveText('Key of Ab - BPM 140 - Time 7/8', 45, 63);
+  });
+
+  it('renders footer content', () => {
+    const formatter = new PdfFormatter();
+    const song = new Song();
+
+    const config: PDFConfiguration = {
+      ...defaultConfiguration,
+      layout: {
+        ...defaultConfiguration.layout,
+        footer: {
+          height: 60,
+          content: [
+            {
+              type: 'text',
+              template: 'Page %{page} of %{pages}',
+              style: {
+                name: 'NimbusSansL-Reg', style: 'normal', size: 12, color: 100,
+              },
+              position: { x: 'center', y: 28 },
+            },
+          ],
+        },
+      },
+    };
+
+    formatter.format(song, configure({}), config, StubbedPdfDoc);
+    const doc = formatter.doc.doc as StubbedPdfDoc;
+
+    expect(doc).toHaveText('Page 1 of 1', 275, 750);
   });
 });

@@ -44,6 +44,9 @@ import {
   PdfConstructor,
 } from './pdf_formatter/types';
 import DocWrapper from './pdf_formatter/doc_wrapper';
+import Metadata from '../chord_sheet/metadata';
+import ChordProParser from '../parser/chord_pro_parser';
+import TextFormatter from './text_formatter';
 
 declare const performance: Performance;
 
@@ -229,12 +232,21 @@ class PdfFormatter extends Formatter {
     return new Condition(contentItem.condition, this.metadata).evaluate();
   }
 
-  private get metadata(): Record<string, any> {
-    return {
-      ...this.song.metadata.metadata,
-      page: this.currentPage,
-      pages: this.totalPages,
-    };
+  private get metadata(): Metadata {
+    let metadata = this.song.metadata.merge({
+      page: this.doc.currentPage.toString(),
+      pages: this.doc.totalPages.toString(),
+    });
+
+    const capo = this.song.metadata.getSingle('capo');
+    const key = this.song.metadata.getSingle('key');
+
+    if (capo && key) {
+      const capoInt = parseInt(capo, 10);
+      metadata = metadata.merge({ capoKey: getCapos(key)[capoInt] });
+    }
+
+    return metadata;
   }
 
   private renderTextItem(textItem: LayoutContentItemWithText, sectionY: number) {
@@ -242,7 +254,7 @@ class PdfFormatter extends Formatter {
       value, template = '', style, position,
     } = textItem;
 
-    const textValue = value || this.parseTemplate(template, this.song.metadata);
+    const textValue = value || this.evaluateTemplate(template, this.metadata);
 
     if (!textValue) {
       return;
@@ -326,56 +338,9 @@ class PdfFormatter extends Formatter {
     this.doc.resetDash();
   }
 
-  private parseTemplate(template: string, metadata: Record<string, any>): string {
-    const shorthandMapping: Record<string, string> = {
-      'k': 'key',
-      // TODO:: share with tag.ts class
-    };
-
-    // Merge metadata and metadata.metadata to ensure both are accessible
-    // supports conditional logic on x_metadata fields
-    const mergedMetadata = {
-      ...metadata.metadata,
-      ...metadata,
-    };
-
-    if (mergedMetadata.capo && mergedMetadata.key) {
-      const capoInt = parseInt(mergedMetadata.capo, 10);
-      mergedMetadata.capoKey = getCapos(metadata.key)[capoInt];
-    }
-
-    // Include class variables like currentPage and totalPages if available
-    mergedMetadata.currentPage = this.currentPage;
-    mergedMetadata.totalPages = this.totalPages;
-
-    // Normalize metadata keys to include shorthand equivalents
-    const normalizedMetadata: Record<string, any> = { ...mergedMetadata };
-    Object.entries(shorthandMapping).forEach(([shorthand, longform]) => {
-      if (mergedMetadata[shorthand] !== undefined) {
-        normalizedMetadata[longform] = mergedMetadata[shorthand];
-      }
-    });
-
-    // Replace placeholders with their corresponding values
-    let parsedTemplate = template.replace(/%\{(\w+)\}/g, (match, key) => (
-      normalizedMetadata[key] !== null && normalizedMetadata[key] !== undefined ?
-        normalizedMetadata[key] :
-        ''
-    ));
-
-    // Remove conditional blocks for unavailable fields
-    parsedTemplate = parsedTemplate.replace(
-      /{\?(\w+)}(.*?){\/\1}/g,
-      (match, key, content) => (
-        normalizedMetadata[key] !== null && normalizedMetadata[key] !== undefined ?
-          content :
-          ''),
-    );
-
-    // Remove unnecessary bullet separators if adjacent content is missing
-    parsedTemplate = parsedTemplate.replace(/•\s+/g, (_match) => '').trim();
-
-    return parsedTemplate;
+  private evaluateTemplate(template: string, metadata: Metadata): string {
+    const parsed = new ChordProParser().parse(template);
+    return new TextFormatter().format(parsed, metadata);
   }
 
   // Helper method to calculate x position based on alignment
