@@ -62,10 +62,6 @@ class PdfFormatter extends Formatter {
 
   currentColumn = 1;
 
-  totalPages = 1;
-
-  currentPage = 1;
-
   configuration: Configuration = defaultConfiguration;
 
   pdfConfiguration: PDFConfiguration = defaultPDFConfiguration;
