@@ -115,8 +115,6 @@ class DocWrapper {
   }
 
   text(text: string, x: number, y: number, style?: FontConfiguration) {
-    this.doc.text(text, x, y);
-
     this.withFontConfiguration(style || null, () => {
       this.doc.text(text, x, y);
 

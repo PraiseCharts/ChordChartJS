@@ -130,6 +130,10 @@ describe('PdfFormatter', () => {
       ...defaultConfiguration,
       layout: {
         ...defaultConfiguration.layout,
+        header: {
+          height: 60,
+          content: [],
+        },
         footer: {
           height: 60,
           content: [
@@ -148,6 +152,8 @@ describe('PdfFormatter', () => {
 
     formatter.format(song, configure({}), config, StubbedPdfDoc);
     const doc = formatter.doc.doc as StubbedPdfDoc;
+
+    expect(doc.renderedItems).toHaveLength(1);
 
     expect(doc).toHaveText('Page 1 of 1', 275, 750);
   });
