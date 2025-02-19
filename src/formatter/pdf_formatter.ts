@@ -73,6 +73,8 @@ class PdfFormatter extends Formatter {
 
   _dimensions: Dimensions | null = null;
 
+  renderTime = 0;
+
   get dimensions(): Dimensions {
     if (!this._dimensions) {
       this._dimensions = this.buildDimensions();
@@ -236,6 +238,7 @@ class PdfFormatter extends Formatter {
     let metadata = this.song.metadata.merge({
       page: this.doc.currentPage.toString(),
       pages: this.doc.totalPages.toString(),
+      renderTime: this.renderTime.toFixed(5),
     });
 
     const capo = this.song.metadata.getSingle('capo');
@@ -1377,17 +1380,7 @@ class PdfFormatter extends Formatter {
   // Record formatting time
   private recordFormattingTime(): void {
     const endTime = performance.now();
-    const timeTaken = ((endTime - this.startTime) / 1000).toFixed(5);
-
-    this.doc.setFontStyle(this.getFontConfiguration('text'));
-    this.doc.setTextColor(100);
-
-    const { width: pageWidth } = this.doc.pageSize;
-    const timeTextWidth = this.doc.getTextWidth(`${timeTaken}s`);
-    const timeTextX = pageWidth - timeTextWidth - this.margins.right;
-    const timeTextY = this.margins.top / 2;
-
-    this.doc.text(`${timeTaken}s`, timeTextX, timeTextY);
+    this.renderTime = ((endTime - this.startTime) / 1000);
   }
 }
 
