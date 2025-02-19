@@ -18,7 +18,7 @@ function appendValue(array: string[], value: string): void {
  *
  * See {@link Metadata#get}
  */
-class Metadata extends MetadataAccessors {
+class Metadata extends MetadataAccessors implements Iterable<[string, string | string[]]> {
   metadata: Record<string, string | string[]> = {};
 
   constructor(metadata: Record<string, string | string[]> = {}) {
@@ -111,6 +111,25 @@ class Metadata extends MetadataAccessors {
     }
 
     return this.getArrayItem(prop);
+  }
+
+  /**
+   * Returns all metadata values, including generated values like `_key`.
+   * @returns {Object.<string, string|string[]>} the metadata values
+   */
+  all(): Record<string, string | string[]> {
+    const all = { ...this.metadata };
+    const key = this.calculateKeyFromCapo();
+
+    if (key) {
+      all[_KEY] = key;
+    }
+
+    return all;
+  }
+
+  [Symbol.iterator](): IterableIterator<[string, string | string[]]> {
+    return Object.entries(this.all())[Symbol.iterator]();
   }
 
   /**
