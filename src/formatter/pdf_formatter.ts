@@ -44,11 +44,13 @@ import {
   PdfConstructor,
 } from './pdf_formatter/types';
 import DocWrapper from './pdf_formatter/doc_wrapper';
-import Metadata from '../chord_sheet/metadata';
 import ChordProParser from '../parser/chord_pro_parser';
 import TextFormatter from './text_formatter';
+import Metadata from '../chord_sheet/metadata';
 
 declare const performance: Performance;
+
+type ExtendedMetadata = Record<string, number | string | string[]>;
 
 class PdfFormatter extends Formatter {
   song: Song = new Song();
@@ -75,6 +77,8 @@ class PdfFormatter extends Formatter {
 
   renderTime = 0;
 
+  songMetadata: Record<string, string | string[]> = {};
+
   get dimensions(): Dimensions {
     if (!this._dimensions) {
       this._dimensions = this.buildDimensions();
@@ -91,6 +95,7 @@ class PdfFormatter extends Formatter {
   ): void {
     this.startTime = performance.now();
     this.song = song;
+    this.songMetadata = this.song.metadata.all();
     this.configuration = configuration;
     this.pdfConfiguration = pdfConfiguration;
     this.doc = DocWrapper.setup(docConstructor);
@@ -231,22 +236,27 @@ class PdfFormatter extends Formatter {
       return true;
     }
 
-    return new Condition(contentItem.condition, this.metadata).evaluate();
+    const metadata = { ...this.song.metadata.all(), ...this.extraMetadata };
+    return new Condition(contentItem.condition, metadata).evaluate();
   }
 
-  private get metadata(): Metadata {
-    let metadata = this.song.metadata.merge({
-      page: this.doc.currentPage.toString(),
-      pages: this.doc.totalPages.toString(),
-      renderTime: this.renderTime.toFixed(5),
-    });
+  private get extraMetadata(): ExtendedMetadata {
+    let metadata: ExtendedMetadata = {
+      page: this.doc.currentPage,
+      pages: this.doc.totalPages,
+      renderTime: this.renderTime,
+    };
 
     const capo = this.song.metadata.getSingle('capo');
     const key = this.song.metadata.getSingle('key');
 
     if (capo && key) {
       const capoInt = parseInt(capo, 10);
-      metadata = metadata.merge({ capoKey: getCapos(key)[capoInt] });
+
+      metadata = {
+        ...metadata,
+        capoKey: getCapos(key)[capoInt],
+      };
     }
 
     return metadata;
@@ -257,7 +267,8 @@ class PdfFormatter extends Formatter {
       value, template = '', style, position,
     } = textItem;
 
-    const textValue = value || this.evaluateTemplate(template, this.metadata);
+    const metadata = this.song.metadata.merge(this.extraMetadata);
+    const textValue = value || this.evaluateTemplate(template, metadata);
 
     if (!textValue) {
       return;

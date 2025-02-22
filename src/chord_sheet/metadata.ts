@@ -29,7 +29,7 @@ class Metadata extends MetadataAccessors implements Iterable<[string, string | s
     }
   }
 
-  merge(metadata: Record<string, string | string[]>): Metadata {
+  merge(metadata: Record<string, string | string[] | number>): Metadata {
     const clone = this.clone();
     clone.assign(metadata);
     return clone;
@@ -207,7 +207,7 @@ class Metadata extends MetadataAccessors implements Iterable<[string, string | s
     return null;
   }
 
-  private assign(metadata: Record<string, string | string[]>): void {
+  private assign(metadata: Record<string, string | string[] | number>): void {
     Object
       .keys(metadata)
       .filter((key) => !isReadonlyTag(key))
@@ -217,7 +217,7 @@ class Metadata extends MetadataAccessors implements Iterable<[string, string | s
         if (value instanceof Array) {
           this.metadata[key] = [...value];
         } else {
-          this.metadata[key] = value;
+          this.metadata[key] = value.toString();
         }
       });
   }

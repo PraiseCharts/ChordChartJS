@@ -157,4 +157,82 @@ describe('PdfFormatter', () => {
 
     expect(doc).toHaveText('Page 1 of 1', 275, 750);
   });
+
+  it('renders conditional content when the condition matches', () => {
+    const formatter = new PdfFormatter();
+    const song = new Song();
+
+    const config: PDFConfiguration = {
+      ...defaultConfiguration,
+      layout: {
+        ...defaultConfiguration.layout,
+        header: {
+          height: 60,
+          content: [],
+        },
+        footer: {
+          height: 60,
+          content: [
+            {
+              type: 'text',
+              template: 'Page %{page} of %{pages}',
+              style: {
+                name: 'NimbusSansL-Reg', style: 'normal', size: 12, color: 100,
+              },
+              position: { x: 'center', y: 28 },
+              condition: {
+                page: {
+                  equals: 1,
+                },
+              },
+            },
+          ],
+        },
+      },
+    };
+
+    formatter.format(song, configure({}), config, StubbedPdfDoc);
+    const doc = formatter.doc.doc as StubbedPdfDoc;
+
+    expect(doc.renderedItems).toHaveLength(1);
+
+    expect(doc).toHaveText('Page 1 of 1', 275, 750);
+  });
+
+  it('does not render conditional content when the condition does not match', () => {
+    const formatter = new PdfFormatter();
+    const song = new Song();
+
+    const config: PDFConfiguration = {
+      ...defaultConfiguration,
+      layout: {
+        ...defaultConfiguration.layout,
+        header: {
+          height: 60,
+          content: [],
+        },
+        footer: {
+          height: 60,
+          content: [
+            {
+              type: 'text',
+              template: 'Page %{page} of %{pages}',
+              style: {
+                name: 'NimbusSansL-Reg', style: 'normal', size: 12, color: 100,
+              },
+              position: { x: 'center', y: 28 },
+              condition: {
+                page: { equals: 2 },
+              },
+            },
+          ],
+        },
+      },
+    };
+
+    formatter.format(song, configure({}), config, StubbedPdfDoc);
+    const doc = formatter.doc.doc as StubbedPdfDoc;
+
+    expect(doc.renderedItems).toHaveLength(0);
+  });
 });
