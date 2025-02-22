@@ -159,6 +159,42 @@ describe('Condition', () => {
       });
     });
 
+    describe('equals', () => {
+      it('returns true when the variable is equal to the rule', () => {
+        const metadata = {
+          composer: 'Johann Sebastian Bach',
+        };
+
+        const rule: ConditionalRule = {
+          composer: { equals: 'Johann Sebastian Bach' },
+        };
+
+        expect(new Condition(rule, metadata).evaluate()).toBe(true);
+      });
+
+      it('returns false when the variable is not equal to the rule', () => {
+        const metadata = {
+          composer: 'Johann Sebastian Bach',
+        };
+
+        const rule: ConditionalRule = {
+          composer: { equals: 'Beethoven' },
+        };
+
+        expect(new Condition(rule, metadata).evaluate()).toBe(false);
+      });
+
+      it('returns false when the variable does not exist', () => {
+        const metadata = {};
+
+        const rule: ConditionalRule = {
+          composer: { equals: 'Johann Sebastian Bach' },
+        };
+
+        expect(new Condition(rule, metadata).evaluate()).toBe(false);
+      });
+    });
+
     describe('exists', () => {
       it('returns true when the variable exists', () => {
         const metadata = {
@@ -624,6 +660,64 @@ describe('Condition', () => {
         };
 
         expect(new Condition(rule, metadata).evaluate()).toBe(true);
+      });
+    });
+
+    describe('special rules for pages', () => {
+      describe('first', () => {
+        it('returns true when the page is the first page', () => {
+          const metadata = {
+            page: 1,
+            pages: 5,
+          };
+
+          const rule: ConditionalRule = {
+            page: { first: true },
+          };
+
+          expect(new Condition(rule, metadata).evaluate()).toBe(true);
+        });
+
+        it('returns false when the page is not the first page', () => {
+          const metadata = {
+            page: 2,
+            pages: 5,
+          };
+
+          const rule: ConditionalRule = {
+            page: { first: true },
+          };
+
+          expect(new Condition(rule, metadata).evaluate()).toBe(false);
+        });
+      });
+
+      describe('last', () => {
+        it('returns true when the page is the last page', () => {
+          const metadata = {
+            page: 5,
+            pages: 5,
+          };
+
+          const rule: ConditionalRule = {
+            page: { last: true },
+          };
+
+          expect(new Condition(rule, metadata).evaluate()).toBe(true);
+        });
+
+        it('returns false when the page is not the last page', () => {
+          const metadata = {
+            page: 4,
+            pages: 5,
+          };
+
+          const rule: ConditionalRule = {
+            page: { last: true },
+          };
+
+          expect(new Condition(rule, metadata).evaluate()).toBe(false);
+        });
       });
     });
   });

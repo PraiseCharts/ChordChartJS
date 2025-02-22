@@ -35,10 +35,10 @@ class Condition {
 
     const value = this.metadata[field];
 
-    return this.evaluateSingleCondition(value, rule);
+    return this.evaluateSingleCondition(value, field, rule);
   }
 
-  private evaluateSingleCondition(value: any, rule: ConditionRule): boolean {
+  private evaluateSingleCondition(value: any, field: string, rule: ConditionRule): boolean {
     if ('all' in rule) {
       return this.all(value, rule.all);
     }
@@ -56,7 +56,7 @@ class Condition {
     }
 
     if ('first' in rule) {
-      return !!rule.first && this.metadata.page === 1;
+      return this.firstPage(field, rule);
     }
 
     if ('greater_than' in rule) {
@@ -72,7 +72,7 @@ class Condition {
     }
 
     if ('last' in rule) {
-      return !!rule.last && this.metadata.page === this.metadata.pages;
+      return this.lastPage(field, rule);
     }
 
     if ('less_than' in rule) {
@@ -96,6 +96,22 @@ class Condition {
     }
 
     return false;
+  }
+
+  private firstPage(field: string, rule: ConditionRule) {
+    if (field !== 'page') {
+      throw new Error('First page condition must be on the page field');
+    }
+
+    return !!rule.first && this.metadata.page === 1;
+  }
+
+  private lastPage(field: string, rule: ConditionRule) {
+    if (field !== 'page') {
+      throw new Error('Last page condition must be on the page field');
+    }
+
+    return !!rule.last && this.metadata.page === this.metadata.pages;
   }
 
   private all(value: any, all?: any[]) {

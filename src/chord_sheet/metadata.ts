@@ -18,7 +18,7 @@ function appendValue(array: string[], value: string): void {
  *
  * See {@link Metadata#get}
  */
-class Metadata extends MetadataAccessors {
+class Metadata extends MetadataAccessors implements Iterable<[string, string | string[]]> {
   metadata: Record<string, string | string[]> = {};
 
   constructor(metadata: Record<string, string | string[]> = {}) {
@@ -29,7 +29,7 @@ class Metadata extends MetadataAccessors {
     }
   }
 
-  merge(metadata: Record<string, string | string[]>): Metadata {
+  merge(metadata: Record<string, string | string[] | number>): Metadata {
     const clone = this.clone();
     clone.assign(metadata);
     return clone;
@@ -114,6 +114,25 @@ class Metadata extends MetadataAccessors {
   }
 
   /**
+   * Returns all metadata values, including generated values like `_key`.
+   * @returns {Object.<string, string|string[]>} the metadata values
+   */
+  all(): Record<string, string | string[]> {
+    const all = { ...this.metadata };
+    const key = this.calculateKeyFromCapo();
+
+    if (key) {
+      all[_KEY] = key;
+    }
+
+    return all;
+  }
+
+  [Symbol.iterator](): IterableIterator<[string, string | string[]]> {
+    return Object.entries(this.all())[Symbol.iterator]();
+  }
+
+  /**
    * Returns a single metadata value. If the actual value is an array, it returns the first value. Else, it returns
    * the value.
    * @ignore
@@ -188,7 +207,7 @@ class Metadata extends MetadataAccessors {
     return null;
   }
 
-  private assign(metadata: Record<string, string | string[]>): void {
+  private assign(metadata: Record<string, string | string[] | number>): void {
     Object
       .keys(metadata)
       .filter((key) => !isReadonlyTag(key))
@@ -198,7 +217,7 @@ class Metadata extends MetadataAccessors {
         if (value instanceof Array) {
           this.metadata[key] = [...value];
         } else {
-          this.metadata[key] = value;
+          this.metadata[key] = value.toString();
         }
       });
   }
