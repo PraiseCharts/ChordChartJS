@@ -106,7 +106,7 @@ export const configExamples = [
             },
             {
               type: 'text',
-              template: 'www.praisecharts.com{?x_pcid}/%{x_pcid}{/x_pcid}',
+              template: 'www.praisecharts.com%{x_pcid|/%{}}',
               style: {
                 name: 'NimbusSansL-Reg',
                 style: 'normal',
@@ -120,7 +120,7 @@ export const configExamples = [
             },
             {
               type: 'text',
-              template: '{?key}Key: %{key}{/key}{?capo} · Capo: %{capo} (%{capoKey}){/capo}{?tempo} · Tempo: %{tempo}{/tempo}{?time} · Time: %{time}{/time}',
+              template: '%{key|Key: %{}} · %{capo|Capo: %{capoKey}} · %{tempo|Tempo: %{}} · %{time|Time: %{}}',
               style: {
                 name: 'NimbusSansL-Reg',
                 style: 'normal',
@@ -153,7 +153,7 @@ export const configExamples = [
             },
             {
               type: 'text',
-              template: 'Page %{currentPage} of %{totalPages}',
+              template: 'Page %{page} of %{pages}',
               style: {
                 name: 'NimbusSansL-Reg',
                 style: 'normal',
@@ -165,13 +165,9 @@ export const configExamples = [
                 y: 50,
               },
               condition: {
-                and: [
-                  {
-                    totalPages: {
-                      greater_than: 1,
-                    },
-                  },
-                ],
+                pages: {
+                  greater_than: 1,
+                },
               },
             },
             {
@@ -209,13 +205,9 @@ export const configExamples = [
                 width: 360,
               },
               condition: {
-                and: [
-                  {
-                    page: {
-                      first: true,
-                    },
-                  },
-                ],
+                page: {
+                  first: true,
+                },
               },
             },
           ],
@@ -343,7 +335,7 @@ export const configExamples = [
             },
             {
               type: 'text',
-              template: 'www.praisecharts.com{?x_pcid}/%{x_pcid}{/x_pcid}',
+              template: 'www.praisecharts.com%{x_pcid|/%{}}',
               style: {
                 name: 'NimbusSansL-Reg',
                 style: 'normal',
@@ -357,7 +349,7 @@ export const configExamples = [
             },
             {
               type: 'text',
-              template: '{?key}Key: %{key}{/key}{?capo} · Capo: %{capo} (%{capoKey}){/capo}{?tempo} · Tempo: %{tempo}{/tempo}{?time} · Time: %{time}{/time}',
+              template: '%{key|Key: %{}} · %{capo|Capo: %{capoKey}} · %{tempo|Tempo: %{}} · %{time|Time: %{}}',
               style: {
                 name: 'NimbusSansL-Reg',
                 style: 'normal',
@@ -390,7 +382,7 @@ export const configExamples = [
             },
             {
               type: 'text',
-              template: 'Page %{currentPage} of %{totalPages}',
+              template: 'Page %{page} of %{pages}',
               style: {
                 name: 'NimbusSansL-Reg',
                 style: 'normal',
@@ -402,13 +394,9 @@ export const configExamples = [
                 y: 50,
               },
               condition: {
-                and: [
-                  {
-                    totalPages: {
-                      greater_than: 1,
-                    },
-                  },
-                ],
+                pages: {
+                  greater_than: 1,
+                },
               },
             },
             {
@@ -446,13 +434,9 @@ export const configExamples = [
                 width: 360,
               },
               condition: {
-                and: [
-                  {
-                    page: {
-                      first: true,
-                    },
-                  },
-                ],
+                page: {
+                  first: true,
+                },
               },
             },
             {
@@ -587,7 +571,7 @@ export const configExamples = [
             },
             {
               type: 'text',
-              template: 'www.praisecharts.com{?x_pcid}/%{x_pcid}{/x_pcid}',
+              template: 'www.praisecharts.com%{x_pcid|/%{}}',
               style: {
                 name: 'NimbusSansL-Reg',
                 style: 'normal',
@@ -601,7 +585,7 @@ export const configExamples = [
             },
             {
               type: 'text',
-              template: '{?key}Key: %{key}{/key}{?tempo} · Tempo: %{tempo}{/tempo}{?time} · Time: %{time}{/time}',
+              template: '%{key|Key: %{}} · %{capo|Capo: %{capoKey}} · %{tempo|Tempo: %{}} · %{time|Time: %{}}',
               style: {
                 name: 'NimbusSansL-Reg',
                 style: 'normal',
@@ -634,7 +618,7 @@ export const configExamples = [
             },
             {
               type: 'text',
-              template: 'Page %{currentPage} of %{totalPages}',
+              template: 'Page %{page} of %{pages}',
               style: {
                 name: 'NimbusSansL-Reg',
                 style: 'normal',
@@ -646,13 +630,9 @@ export const configExamples = [
                 y: 50,
               },
               condition: {
-                and: [
-                  {
-                    totalPages: {
-                      greater_than: 1,
-                    },
-                  },
-                ],
+                pages: {
+                  greater_than: 1,
+                },
               },
             },
             {
@@ -690,13 +670,9 @@ export const configExamples = [
                 width: 360,
               },
               condition: {
-                and: [
-                  {
-                    page: {
-                      first: true,
-                    },
-                  },
-                ],
+                page: {
+                  first: true,
+                },
               },
             },
           ],
@@ -824,7 +800,7 @@ export const configExamples = [
             },
             {
               type: 'text',
-              template: 'www.praisecharts.com{?x_pcid}/%{x_pcid}{/x_pcid}',
+              template: 'www.praisecharts.com%{x_pcid|/%{}}',
               style: {
                 name: 'NimbusSansL-Reg',
                 style: 'normal',
@@ -838,7 +814,7 @@ export const configExamples = [
             },
             {
               type: 'text',
-              template: '{?key}Key: %{key}{/key}{?tempo} · Tempo: %{tempo}{/tempo}{?time} · Time: %{time}{/time}',
+              template: '%{key|Key: %{}} · %{capo|Capo: %{capoKey}} · %{tempo|Tempo: %{}} · %{time|Time: %{}}',
               style: {
                 name: 'NimbusSansL-Reg',
                 style: 'normal',
@@ -871,7 +847,7 @@ export const configExamples = [
             },
             {
               type: 'text',
-              template: 'Page %{currentPage} of %{totalPages}',
+              template: 'Page %{page} of %{pages}',
               style: {
                 name: 'NimbusSansL-Reg',
                 style: 'normal',
@@ -883,13 +859,9 @@ export const configExamples = [
                 y: 50,
               },
               condition: {
-                and: [
-                  {
-                    totalPages: {
-                      greater_than: 1,
-                    },
-                  },
-                ],
+                pages: {
+                  greater_than: 1,
+                },
               },
             },
             {
@@ -927,13 +899,9 @@ export const configExamples = [
                 width: 360,
               },
               condition: {
-                and: [
-                  {
-                    page: {
-                      first: true,
-                    },
-                  },
-                ],
+                page: {
+                  first: true,
+                },
               },
             },
           ],

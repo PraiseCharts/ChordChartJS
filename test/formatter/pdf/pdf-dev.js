@@ -1,5 +1,5 @@
 import { normalize } from 'path';
-import { ChordProParser, PdfFormatter, Configuration } from '../../../lib';
+import { ChordProParser, PdfFormatter, Configuration } from '../../../src';
 import { getKeys, getCapos } from '../../../src/helpers';
 
 import { chordproExamples } from './chordpro-examples';
@@ -127,7 +127,7 @@ const updatePDF = async (key, capo) => {
     const pdfBlob = await formatter.generatePDF();
     renderPDFInBrowser(pdfBlob);
   } catch (e) {
-    console.error('Error generating PDF:', e);
+    console.log('⚠️ Error generating PDF:', e);
   }
 };
 
