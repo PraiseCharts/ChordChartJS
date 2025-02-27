@@ -78,13 +78,15 @@ describe('PdfFormatter', () => {
     expect(doc).toHaveText('Bridge line', 45, 475);
     expect(doc).toHaveText('Grid 1', 45, 499);
 
-    expect(doc).toHaveText('Am', 67, 539);
-    expect(doc).toHaveText('C/G', 135, 539);
-    expect(doc).toHaveText('F', 212, 539);
-    expect(doc).toHaveText('C', 281, 539);
-    expect(doc).toHaveText('G', 351, 539);
-    expect(doc).toHaveText('C/E', 416, 539);
-    expect(doc).toHaveText('Dm', 487, 539);
+    // Chord Diagrams
+    expect(doc).toHaveText('Am', 54, 538);
+    expect(doc).toHaveText('C/G', 96, 538);
+    expect(doc).toHaveText('F', 144, 538);
+    expect(doc).toHaveText('C', 186, 538);
+    expect(doc).toHaveText('G', 228, 538);
+    expect(doc).toHaveText('C/E', 267, 538);
+    // Moved to next column
+    expect(doc).toHaveText('Dm', 54, 609);
   });
 
   it('renders header content', () => {
@@ -234,5 +236,36 @@ describe('PdfFormatter', () => {
     const doc = formatter.doc.doc as StubbedPdfDoc;
 
     expect(doc.renderedItems).toHaveLength(0);
+  });
+
+  it('hides spefcific chord diagrams when using the global override', () => {
+    const formatter = new PdfFormatter();
+    const config: PDFConfiguration = {
+      ...defaultConfiguration,
+      layout: {
+        ...defaultConfiguration.layout,
+        chordDiagrams: {
+          ...defaultConfiguration.layout.chordDiagrams,
+          overrides: {
+            global: {
+              'G': {
+                hide: true,
+              },
+            },
+          },
+        },
+      },
+    };
+    formatter.format(exampleSongSymbol, configure({}), config, StubbedPdfDoc);
+    const doc = formatter.doc.doc as StubbedPdfDoc;
+
+    // Chord Diagrams
+    expect(doc).toHaveText('Am', 54, 538);
+    expect(doc).toHaveText('C/G', 96, 538);
+    expect(doc).toHaveText('F', 144, 538);
+    expect(doc).toHaveText('C', 186, 538);
+    // G is intentionally hidden by global config
+    expect(doc).toHaveText('C/E', 224, 538);
+    expect(doc).toHaveText('Dm', 267, 538);
   });
 });

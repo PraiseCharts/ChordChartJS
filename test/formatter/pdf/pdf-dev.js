@@ -4,6 +4,7 @@ import { getKeys, getCapos } from '../../../src/helpers';
 
 import { chordproExamples } from './chordpro-examples';
 import { configExamples } from './config-examples';
+import { exampleSongSymbol, exampleSongSolfege } from '../../fixtures/song';
 
 // Initialize CodeMirror instances
 const editor = CodeMirror(document.getElementById('editor'), {
@@ -26,6 +27,21 @@ const configSelect = document.getElementById('configSelect');
 const keySelect = document.getElementById('keySelect');
 const capoSelect = document.getElementById('capoSelect');
 
+// Add song objects to the examples
+const allExamples = [
+  ...chordproExamples,
+  {
+    name: '[TEST] Example Song Symbol',
+    content: '',
+    songObject: exampleSongSymbol
+  },
+  {
+    name: '[TEST] Example Song Solfege',
+    content: '',
+    songObject: exampleSongSolfege
+  }
+];
+
 function populateSelect(selectElement, options) {
   selectElement.innerHTML = '';
   options.forEach((option, index) => {
@@ -36,7 +52,7 @@ function populateSelect(selectElement, options) {
   });
 }
 
-populateSelect(chordproSelect, chordproExamples);
+populateSelect(chordproSelect, allExamples);
 populateSelect(configSelect, configExamples);
 
 // Function to render PDF in an <iframe>
@@ -83,9 +99,11 @@ function initializeKeyAndCapoSelectors(songKey) {
 }
 
 const updatePDF = async (key, capo) => {
-  const chordProText = editor.getValue();
+  const selectedExampleIndex = parseInt(chordproSelect.value);
+  const selectedExample = allExamples[selectedExampleIndex];
   const configText = configEditor.getValue();
-  if (!chordProText.trim() || !configText.trim()) {
+
+  if (!configText.trim()) {
     return;
   }
 
@@ -98,19 +116,62 @@ const updatePDF = async (key, capo) => {
   }
 
   try {
-    let song = new ChordProParser().parse(chordProText, { softLineBreaks: true });
+    let song;
+
+    // Check if this example is a pre-defined Song object
+    if (selectedExample.songObject) {
+      song = selectedExample.songObject;
+      // Show the ChordPro representation in the editor (read-only)
+      try {
+        // This displays a basic representation of the song for reference
+        const songTags = [];
+
+        if (song.title) songTags.push(`{title: ${song.title}}`);
+        if (song.key) songTags.push(`{key: ${song.key}}`);
+
+        // Extract sections and content
+        let displayContent = '';
+        song.sections.forEach(section => {
+          displayContent += `{start_of_${section.type}: ${section.name || ''}}\n`;
+          section.lines.forEach(line => {
+            const lineContent = line.items.map(item => {
+              if (item.chords) return `[${item.chords}]${item.lyrics || ''}`;
+              return item.lyrics || '';
+            }).join('');
+            displayContent += lineContent + '\n';
+          });
+          displayContent += `{end_of_${section.type}}\n\n`;
+        });
+
+        editor.setValue(songTags.join('\n') + '\n\n' + displayContent);
+        editor.setOption('readOnly', true);
+      } catch (e) {
+        editor.setValue(`// Using pre-defined Song object: ${selectedExample.name}\n// Editor is read-only`);
+        editor.setOption('readOnly', true);
+      }
+    } else {
+      // Parse ChordPro content from editor
+      const chordProText = editor.getValue();
+      if (!chordProText.trim()) {
+        return;
+      }
+      song = new ChordProParser().parse(chordProText, { softLineBreaks: true });
+      editor.setOption('readOnly', false);
+    }
 
     // If this is the first load or selectors haven't been initialized
-    if (!keySelect.options.length) {
+    if (!keySelect.options.length && song.key) {
       initializeKeyAndCapoSelectors(song.key);
     }
 
     // Use either the provided key/capo or the current selector values
-    const initialKey = key || keySelect.value;
+    const initialKey = key || (keySelect.value || song.key);
     const capoPosition = capo || capoSelect.value;
 
-    // Set the key first
-    song = song.changeKey(initialKey);
+    // Set the key first if it exists
+    if (initialKey && song.key) {
+      song = song.changeKey(initialKey);
+    }
 
     // Apply capo if it's not 'none'
     if (capoPosition !== 'none') {
@@ -131,10 +192,21 @@ const updatePDF = async (key, capo) => {
   }
 };
 
-// Function to load ChordPro example
-function loadChordproExample(index) {
-  const example = chordproExamples[index];
-  editor.setValue(example.content);
+// Function to load example (ChordPro text or Song object)
+function loadExample(index) {
+  const example = allExamples[index];
+
+  // Update the editor content
+  if (example.songObject) {
+    // For Song objects, set a placeholder message
+    editor.setValue(`// Using pre-defined Song object: ${example.name}\n// Editor is read-only`);
+    editor.setOption('readOnly', true);
+  } else {
+    // For ChordPro text examples
+    editor.setValue(example.content);
+    editor.setOption('readOnly', false);
+  }
+
   updatePDF();
 }
 
@@ -160,7 +232,7 @@ capoSelect.addEventListener('change', (e) => {
 
 
 chordproSelect.addEventListener('change', () => {
-  loadChordproExample(chordproSelect.value);
+  loadExample(chordproSelect.value);
 });
 
 configSelect.addEventListener('change', () => {
@@ -168,7 +240,9 @@ configSelect.addEventListener('change', () => {
 });
 
 editor.on('change', () => {
-  updatePDF();
+  if (!editor.getOption('readOnly')) {
+    updatePDF();
+  }
 });
 
 configEditor.on('change', () => {
@@ -182,7 +256,7 @@ function initialize() {
   configSelect.value = 0;
 
   // Initial loading of examples
-  loadChordproExample(chordproSelect.value);
+  loadExample(chordproSelect.value);
   loadConfigExample(configSelect.value);
 }
 

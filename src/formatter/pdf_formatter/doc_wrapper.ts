@@ -66,11 +66,35 @@ class DocWrapper {
     this.currentPage = page;
   }
 
+  setFont(fontName: string, fontStyle?: string, fontWeight?: string | number) {
+    this.doc.setFont(fontName, fontStyle, fontWeight);
+  }
+
+  getFont() {
+    return this.doc.getFont();
+  }
+
+  getFontSize() {
+    return this.doc.getFontSize();
+  }
+
+  getFillColor() {
+    return this.doc.getFillColor();
+  }
+
+  setFillColor(color: number | string) {
+    this.doc.setFillColor(color);
+  }
+
   setFontStyle(styleConfig: FontConfiguration) {
     this.doc.setFont(styleConfig.name, styleConfig.style, styleConfig.weight);
     this.doc.setFontSize(styleConfig.size);
     this.setTextColor(styleConfig.color);
     this.fontConfiguration = styleConfig;
+  }
+
+  setFontSize(size: number) {
+    this.doc.setFontSize(size);
   }
 
   withFontConfiguration(fontConfiguration: FontConfiguration | null, callback: () => any): any {
@@ -181,14 +205,24 @@ class DocWrapper {
     this.doc.roundedRect(x, y, w, h, rx, ry, style);
   }
 
-  withDrawColor(drawColor: number, callback: () => void) {
+  rect(
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    style?: string | null,
+  ): void {
+    this.doc.rect(x, y, w, h, style);
+  }
+
+  withDrawColor(drawColor: number|string, callback: () => void) {
     const previousDrawColor = this.doc.getDrawColor();
     this.doc.setDrawColor(drawColor);
     callback();
     this.doc.setDrawColor(previousDrawColor);
   }
 
-  withFillColor(fillColor: string, callback: () => void) {
+  withFillColor(fillColor: number|string, callback: () => void) {
     const previousFillColor = this.doc.getFillColor();
     this.doc.setFillColor(fillColor);
     callback();

@@ -3,7 +3,7 @@ import JsPDF from 'jspdf';
 import { Performance } from 'perf_hooks';
 
 import ChordDefinition, { isNonSoundingString, isOpenFret } from '../chord_definition/chord_definition';
-import ChordDiagram, { StringMarker, StringNumber } from '../chord_diagram/chord_diagram';
+import ChordDiagram, { Barre, StringMarker } from '../chord_diagram/chord_diagram';
 import Configuration, { defaultConfiguration } from './configuration';
 import Dimensions from './pdf_formatter/dimensions';
 import Formatter from './formatter';
@@ -14,7 +14,12 @@ import Paragraph from '../chord_sheet/paragraph';
 import Song from '../chord_sheet/song';
 import defaultPDFConfiguration from './pdf_formatter/default_configuration';
 import { ChordLyricsPair, SoftLineBreak, Tag } from '../index';
-import { Fret } from '../constants';
+import {
+  FingerNumber,
+  Fret,
+  FretNumber,
+  StringNumber,
+} from '../constants';
 import { getCapos } from '../helpers';
 import Condition from './pdf_formatter/condition';
 
@@ -136,31 +141,179 @@ class PdfFormatter extends Formatter {
   }
 
   renderChordDiagrams() {
-    if (this.currentColumn > 1) {
-      this.newPage();
+    const {
+      renderingConfig,
+      enabled,
+      fonts,
+      definitions = { hiddenChords: [] },
+      overrides = { global: {}, byKey: {} },
+    } = this.pdfConfiguration.layout.chordDiagrams;
+
+    if (!enabled) {
+      return;
     }
 
-    this.x = this.dimensions.minX;
-    const chordDiagramWidth = 60;
+    const diagramSpacing = renderingConfig?.diagramSpacing || 7;
+    const maxDiagramsPerRow = renderingConfig?.maxDiagramsPerRow || null;
+
+    const { columnCount } = this.pdfConfiguration.layout.sections.global;
+    const { columnWidth } = this.dimensions;
+    const yMargin = diagramSpacing; // Vertical spacing
+
+    // Define minimum and maximum widths for readability
+    const minChordDiagramWidth = 30; // Minimum width for legibility
+    const maxChordDiagramWidth = 50; // Maximum width to prevent excessive growth
+
+    // Estimate how many diagrams can fit per row, considering spacing
+    const potentialDiagramsPerRow = Math.floor(columnWidth / (minChordDiagramWidth + diagramSpacing));
+    const diagramsPerRow = maxDiagramsPerRow ?
+      Math.min(maxDiagramsPerRow, potentialDiagramsPerRow) :
+      potentialDiagramsPerRow;
+
+    // Calculate the actual width per diagram, ensuring it stays within bounds
+    const totalSpacing = (diagramsPerRow - 1) * diagramSpacing;
+    const chordDiagramWidth = Math.max(
+      minChordDiagramWidth,
+      Math.min(maxChordDiagramWidth, (columnWidth - totalSpacing) / diagramsPerRow),
+    );
     const chordDiagramHeight = JsPDFRenderer.calculateHeight(chordDiagramWidth);
-    const xMargin = 10;
-    const yMargin = 10;
 
-    this.chordDefinitions.forEach((chordDefinition: ChordDefinition) => {
-      if ((this.x + chordDiagramWidth) > this.dimensions.maxX) {
+    // Initialize position
+    this.x = this.columnStartX();
+    const currentPageBottom = this.getColumnBottomY();
+
+    // Handle column continuation or new page
+    if (this.currentColumn > 1 && this.y + chordDiagramHeight > currentPageBottom) {
+      this.newPage();
+      this.y = this.dimensions.minY;
+      this.x = this.columnStartX();
+    }
+
+    const songKey = this.song.key || 0;
+
+    if (columnCount === 1) {
+      // Single-column: stack vertically
+      this.chordDefinitions.forEach((chordDefinitionFromSong: ChordDefinition) => {
+        let chordDefinition = chordDefinitionFromSong;
+        const chordName = chordDefinition.name;
+
+        // Check for overrides, prioritizing key-specific > global > defaults
+        let shouldHide = definitions.hiddenChords.includes(chordName);
+        let customDefinition: string|null = null;
+
+        // Check key-specific overrides first
+        if (overrides?.byKey?.[songKey]?.[chordName]) {
+          const keyOverride = overrides.byKey[songKey][chordName];
+          if (keyOverride.hide !== undefined) {
+            shouldHide = keyOverride.hide;
+          }
+          if (keyOverride.definition) {
+            customDefinition = keyOverride.definition;
+          }
+        }
+
+        // Fall back to global overrides if no key-specific override exists or if byKey[songKey] is undefined
+        if (!overrides?.byKey?.[songKey]?.[chordName]) {
+          if (overrides?.global?.[chordName]) {
+            const globalOverride = overrides.global[chordName];
+            if (globalOverride.hide !== undefined) {
+              shouldHide = globalOverride.hide;
+            }
+            if (globalOverride.definition) {
+              customDefinition = globalOverride.definition;
+            }
+          }
+        }
+
+        if (shouldHide) {
+          return;
+        }
+
+        if (customDefinition) {
+          chordDefinition = ChordDefinition.parse(customDefinition); // Assume this method exists
+        }
+
+        if (this.y + chordDiagramHeight > currentPageBottom) {
+          this.newPage();
+          this.y = this.dimensions.minY;
+          this.x = this.columnStartX();
+        }
+        const chordDiagram = this.buildChordDiagram(chordDefinition);
+        const renderer = new JsPDFRenderer(this.doc, {
+          x: this.x,
+          y: this.y,
+          width: chordDiagramWidth,
+          fonts,
+        });
+        chordDiagram.render(renderer);
         this.y += chordDiagramHeight + yMargin;
-        this.x = this.dimensions.minX;
-      }
+      });
+    } else {
+      // Multi-column: wrap horizontally with dynamic width
+      let diagramsInRow = 0;
+      this.chordDefinitions.forEach((chordDefinitionFromSong: ChordDefinition) => {
+        let chordDefinition = chordDefinitionFromSong;
+        const chordName = chordDefinition.name;
 
-      if (this.y + chordDiagramHeight > this.dimensions.maxY) {
-        this.newPage();
-      }
+        // Check for overrides, prioritizing key-specific > global > defaults
+        let shouldHide = false;
+        let customDefinition: string|null = null;
 
-      const chordDiagram = this.buildChordDiagram(chordDefinition);
-      const renderer = new JsPDFRenderer(this.doc, { x: this.x, y: this.y, width: chordDiagramWidth });
-      chordDiagram.render(renderer);
-      this.x += renderer.width + xMargin;
-    });
+        // Check key-specific overrides first
+        if (overrides?.byKey?.[songKey]?.[chordName]) {
+          const keyOverride = overrides.byKey[songKey][chordName];
+          if (keyOverride.hide !== undefined) {
+            shouldHide = keyOverride.hide;
+          }
+          if (keyOverride.definition) {
+            customDefinition = keyOverride.definition;
+          }
+        }
+
+        // Fall back to global overrides if no key-specific override exists or if byKey[songKey] is undefined
+        if (!overrides?.byKey?.[songKey]?.[chordName]) {
+          if (overrides?.global?.[chordName]) {
+            const globalOverride = overrides.global[chordName];
+            if (globalOverride.hide !== undefined) {
+              shouldHide = globalOverride.hide;
+            }
+            if (globalOverride.definition) {
+              customDefinition = globalOverride.definition;
+            }
+          }
+        }
+
+        if (shouldHide) {
+          return;
+        }
+
+        if (customDefinition) {
+          chordDefinition = ChordDefinition.parse(customDefinition);
+        }
+
+        if (diagramsInRow >= diagramsPerRow || this.x + chordDiagramWidth > this.columnStartX() + columnWidth) {
+          this.y += chordDiagramHeight + yMargin;
+          this.x = this.columnStartX();
+          diagramsInRow = 0;
+        }
+        if (this.y + chordDiagramHeight > currentPageBottom) {
+          this.moveToNextColumn();
+          this.y = this.dimensions.minY;
+          this.x = this.columnStartX();
+          diagramsInRow = 0;
+        }
+        const chordDiagram = this.buildChordDiagram(chordDefinition);
+        const renderer = new JsPDFRenderer(this.doc, {
+          x: this.x,
+          y: this.y,
+          width: chordDiagramWidth,
+          fonts,
+        });
+        chordDiagram.render(renderer);
+        this.x += chordDiagramWidth + diagramSpacing;
+        diagramsInRow += 1;
+      });
+    }
   }
 
   buildChordDiagram(chordDefinition: ChordDefinition): ChordDiagram {
@@ -172,26 +325,95 @@ class PdfFormatter extends Formatter {
       .map((fret: Fret, index: number) => (isNonSoundingString(fret) ? (index + 1) as StringNumber : null))
       .filter((stringNumber: StringNumber | null) => stringNumber !== null);
 
-    const markers = chordDefinition.frets
-      .map((fret: Fret, index: number) => {
-        if (isNonSoundingString(fret) || isOpenFret(fret)) {
-          return null;
-        }
+    // Collect potential markers and identify barres
+    const markers: StringMarker[] = [];
+    const barres: Barre[] = []; // Use the Barre interface type
 
-        return {
-          string: index + 1 as StringNumber,
-          fret: fret as number,
-          finger: chordDefinition.fingers[index],
-        } as StringMarker;
-      })
-      .filter((marker: StringMarker | null) => marker !== null);
+    // Only proceed with barre detection if fingerings are provided
+    if (!chordDefinition.fingers || chordDefinition.fingers.length === 0) {
+      // No fingerings provided, treat all non-open/non-muted frets as individual markers
+      chordDefinition.frets.forEach((fret: Fret, index: number) => {
+        if (!isNonSoundingString(fret) && !isOpenFret(fret)) {
+          const stringNumber = (index + 1) as StringNumber;
+          markers.push({
+            string: stringNumber,
+            fret,
+            finger: 0,
+          });
+        }
+      });
+    } else {
+      // Group strings by fret and finger to detect barres, using provided fingerings
+      const fretFingerGroups: Record<number, Record<number, number[]>> = {};
+
+      chordDefinition.frets.forEach((fret: Fret, index: number) => {
+        if (!isNonSoundingString(fret) && !isOpenFret(fret)) {
+          const stringNumber = (index + 1) as StringNumber;
+          const finger = chordDefinition.fingers[index] || 0; // Default to 0 if undefined
+
+          if (finger !== 0) { // Ignore muted/unused strings
+            const fretNum = fret as number;
+
+            if (!fretFingerGroups[fretNum]) {
+              fretFingerGroups[fretNum] = {};
+            }
+            if (!fretFingerGroups[fretNum][finger]) {
+              fretFingerGroups[fretNum][finger] = [];
+            }
+            fretFingerGroups[fretNum][finger].push(stringNumber);
+          }
+        }
+      });
+
+      // Process each fret and finger combination to identify barres
+      Object.entries(fretFingerGroups).forEach(([fretStr, fingers]) => {
+        const fret = parseInt(fretStr, 10) as FretNumber; // Cast to FretNumber
+        Object.entries(fingers).forEach(([fingerStr, strings]) => {
+          const finger = parseInt(fingerStr, 10) as FingerNumber;
+          if (strings.length > 1) {
+            // This finger is used on multiple strings at the same fret—it's a barre
+            strings.sort((a, b) => a - b); // Sort strings for consistent ordering
+            const from = strings[0] as StringNumber; // First string (lowest number)
+            const to = strings[strings.length - 1] as StringNumber; // Last string (highest number)
+
+            // Validate string numbers (1–6 for standard guitar)
+            if (from < 1 || from > 6 || to < 1 || to > 6 || from > to) {
+              return; // Skip invalid barres
+            }
+
+            barres.push({
+              from,
+              to,
+              fret,
+            });
+          } else {
+            // Single string, create a regular marker
+            const string = strings[0] as StringNumber;
+            markers.push({
+              string,
+              fret: fret as number, // Ensure type compatibility
+              finger,
+            });
+          }
+        });
+      });
+    }
+
+    // Filter out strings covered by barres from individual markers
+    const finalMarkers = markers.filter((marker) => !barres.some((barre) => marker.string >= barre.from &&
+      marker.string <= barre.to &&
+      marker.fret === barre.fret));
+
+    const { renderingConfig } = this.pdfConfiguration.layout.chordDiagrams;
 
     return new ChordDiagram({
       chord: chordDefinition.name,
       openStrings,
       unusedStrings,
-      markers,
-    });
+      markers: finalMarkers,
+      barres,
+      baseFret: chordDefinition.baseFret,
+    }, renderingConfig);
   }
 
   // Save the formatted document as a PDF file

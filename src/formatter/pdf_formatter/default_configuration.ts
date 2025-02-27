@@ -95,6 +95,44 @@ const defaultConfiguration: PDFConfiguration = {
         },
       },
     },
+    chordDiagrams: {
+      enabled: true,
+      renderingConfig: {
+        titleY: 28,
+        neckWidth: 120,
+        neckHeight: 160,
+        nutThickness: 10,
+        fretThickness: 4,
+        nutColor: 0,
+        fretColor: '#929292',
+        stringIndicatorSize: 14,
+        fingerIndicatorSize: 16,
+        stringColor: 0,
+        fingerIndicatorOffset: 0,
+        stringThickness: 3,
+        fretLineThickness: 4,
+        openStringIndicatorThickness: 2,
+        unusedStringIndicatorThickness: 2,
+        markerThickness: 2,
+        barreThickness: 2,
+        titleFontSize: 48,
+        baseFretFontSize: 8,
+        fingerNumberFontSize: 28,
+        showFingerNumbers: true,
+        diagramSpacing: 7,
+      },
+      fonts: {
+        title: {
+          name: 'NimbusSansL-Bol', style: 'bold', size: 9, color: 'black',
+        },
+        fingerings: {
+          name: 'NimbusSansL-Bol', style: 'bold', size: 6, color: 'black',
+        },
+        baseFret: {
+          name: 'NimbusSansL-Bol', style: 'bold', size: 6, color: 'black',
+        },
+      },
+    },
   },
 };
 

@@ -228,6 +228,58 @@ export const configExamples = [
             },
           },
         },
+        chordDiagrams: {
+          enabled: true,
+          renderingConfig: {
+            titleY: 16,
+            neckWidth: 120,
+            neckHeight: 160,
+            nutThickness: 10,
+            fretThickness: 4,
+            nutColor: 0,
+            fretColor: '#AAAAAA',
+            stringIndicatorSize: 14,
+            fingerIndicatorSize: 16,
+            stringColor: 0,
+            fingerIndicatorOffset: 0,
+            stringThickness: 3,
+            fretLineThickness: 4,
+            openStringIndicatorThickness: 2,
+            unusedStringIndicatorThickness: 2,
+            markerThickness: 2,
+            barreThickness: 2,
+            titleFontSize: 40,
+            baseFretFontSize: 8,
+            fingerNumberFontSize: 28,
+            showFingerNumbers: false,
+            diagramSpacing: 7,
+          },
+          overrides: {
+            global: {
+              'G': {
+                hide: true,
+              },
+            },
+            byKey: {
+              'B': {
+                'G': {
+                  definition: 'G base-fret 3 frets 1 3 3 2 1 1 fingers 1 3 4 2 1 1',
+                },
+              },
+            },
+          },
+          fonts: {
+            title: {
+              name: 'NimbusSansL-Bol', style: 'bold', size: 9, color: 'black',
+            },
+            fingerings: {
+              name: 'NimbusSansL-Bol', style: 'bold', size: 6, color: 'black',
+            },
+            baseFret: {
+              name: 'NimbusSansL-Bol', style: 'bold', size: 6, color: 'black',
+            },
+          },
+        },
       },
     },
   },
@@ -464,6 +516,9 @@ export const configExamples = [
             },
           },
         },
+        chordDiagrams: {
+          enabled: false,
+        },
       },
     },
   },
@@ -693,6 +748,9 @@ export const configExamples = [
             },
           },
         },
+        chordDiagrams: {
+          enabled: false,
+        },
       },
     },
   },
@@ -921,6 +979,9 @@ export const configExamples = [
               lyricsOnly: true,
             },
           },
+        },
+        chordDiagrams: {
+          enabled: false,
         },
       },
     },

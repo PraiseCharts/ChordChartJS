@@ -183,4 +183,21 @@ He won’t [Gm]fa [F]- [Eb]il, He won’t [Gm]fa [F]- [Bb]- [Bb/D]- [Eb]il
 {c:End}
 No, He [Bb]won't`,
   },
+  {
+    name: 'Chord Diagram Test',
+    content: `{t:Chord Diagram Test}
+{artist: Cody Carnes}
+{author: Cody Carnes, Austin Davis, Chandler Moore}
+{key:C}
+{tempo:150}
+{time:6/8}
+{copyright: @2021 Writers Roof Publishing, TBCO Publishing, A.L.K.D. Music, Capitol CMG Paragon  (Admin by Capitol CMG Publishing) For Humans, Maverick City Publishing (Admin by Essential Music Publishing)}
+
+{c:Intro}
+[B][/][|][/][/][|][Bb2][/][|][/]
+
+[Am4][/][|][/][/][|][C7][/][|][/]
+
+`,
+  },
 ];

@@ -103,7 +103,9 @@ export const MAJOR = 'M';
 export type Mode = 'M' | 'm';
 
 export type FretNumber = number;
+export type StringNumber = 1 | 2 | 3 | 4 | 5 | 6;
 export type OpenFret = 0;
+export type FingerNumber = 1 | 2 | 3 | 4 | 5 | OpenFret;
 export type NonSoundingString = '-1' | 'N' | 'x';
 
 export const openFret = 0 as OpenFret;

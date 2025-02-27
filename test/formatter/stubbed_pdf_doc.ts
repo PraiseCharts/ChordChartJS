@@ -240,6 +240,10 @@ class StubbedPdfDoc {
     return this.fontSize;
   }
 
+  getFillColor() {
+    return this.jsPDF.getFillColor();
+  }
+
   getLineWidth() {
     return this.lineWidth;
   }
@@ -370,6 +374,13 @@ class StubbedPdfDoc {
 
   splitTextToSize(text: string, maxlen: number, options?: any): any {
     return this.jsPDF.splitTextToSize(text, maxlen, options);
+  }
+
+  setFillColor(ch1: number, ch2: number, ch3: number, ch4?: number): StubbedPdfDoc;
+
+  setFillColor(ch1: string | number, ch2?: number, ch3?: number, ch4?: number): StubbedPdfDoc {
+    this.#normalizeColor(ch1, ch2, ch3, ch4);
+    return this;
   }
 
   text(text: string | string[], x: number, y: number, options?: TextOptionsLight, transform?: any): StubbedPdfDoc {

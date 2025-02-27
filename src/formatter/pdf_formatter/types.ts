@@ -16,6 +16,7 @@ import {
 
 import Item from '../../chord_sheet/item';
 import { ParagraphType } from '../../constants';
+import { ChordDiagramRenderingConfig } from '../../chord_diagram/chord_diagram';
 
 type FontSection = 'title' | 'subtitle' | 'metadata' | 'text' | 'chord' | 'comment' | 'annotation' | 'sectionLabel';
 export type LayoutSection = 'header' | 'footer';
@@ -84,6 +85,8 @@ export interface FontConfiguration {
 }
 
 export type FontConfigurations = Record<FontSection, FontConfiguration>;
+
+export type ChordDiagramFontConfigurations = Record<'title' | 'fingerings' | 'baseFret', FontConfiguration>;
 
 export interface SectionDisplay {
   labelStyle?: 'uppercase';
@@ -175,6 +178,24 @@ export interface LayoutItem {
   content: LayoutContentItem[],
 }
 
+interface ChordDiagramOverrides {
+  hide?: boolean;
+  definition?: string;
+}
+
+interface ChordDiagramsConfig {
+  enabled: boolean;
+  renderingConfig?: ChordDiagramRenderingConfig;
+  definitions?: {
+    hiddenChords: string[];
+  };
+  overrides?: {
+    global?: Record<string, ChordDiagramOverrides>;
+    byKey?: Record<string, Record<string, ChordDiagramOverrides>>;
+  };
+  fonts: ChordDiagramFontConfigurations;
+}
+
 export interface LayoutConfig {
   global: {
     margins: Margins;
@@ -182,6 +203,7 @@ export interface LayoutConfig {
   header: LayoutItem;
   footer: LayoutItem;
   sections: SectionsConfig;
+  chordDiagrams: ChordDiagramsConfig;
 }
 
 export interface MeasuredItem {
